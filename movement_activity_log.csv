@@ -1,0 +1,11 @@
+Timestamp,Person_Name,Gait_Status,Hip_Feature,Ankle_Feature,Leg_Feature,Arm_Feature,Torso_Feature
+2026-08-17 03:10:50,Unknown,Normal gait,0.0018,0.0303,0.0108,0.1476,0.0583
+2026-08-17 03:10:52,Thonthan,Normal gait,0.0140,0.0359,0.0121,0.2206,0.0751
+2026-08-17 03:10:54,Thonthan,Normal gait,0.0118,0.0258,0.0404,0.3330,0.0642
+2026-08-17 03:10:56,Unknown,Normal gait,0.0132,0.0159,0.0540,1.0639,0.0736
+2026-08-17 03:10:58,Thonthan,Normal gait,0.0072,0.0546,0.0678,0.7147,0.0869
+2026-08-17 03:13:54,Unknown,Normal gait,0.0194,0.2019,0.0581,0.0885,0.0019
+2026-08-17 03:13:57,Thonthan,Abnormal gait,0.0312,0.0204,0.0056,0.3162,0.1028
+2026-08-17 03:13:59,Thonthan,Abnormal gait,0.0301,0.0919,0.0434,0.3460,0.0883
+2026-08-17 03:14:01,Thonthan,Abnormal gait,0.0202,0.0519,0.0230,0.3868,0.0417
+2026-08-17 03:14:03,Thonthan,Abnormal gait,0.0427,0.0977,0.0385,0.3418,0.1458
