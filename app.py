@@ -53,25 +53,28 @@ class VideoProcessor:
 
 def get_rtc_configuration():
     try:
-        return {
-            "iceServers": [
-                {
-                    "urls": [st.secrets["TURN_URL"]],
-                    "username": st.secrets["TURN_USERNAME"],
-                    "credential": st.secrets["TURN_CREDENTIAL"],
-                }
-            ]
-        }
+        turn_url = str(st.secrets["TURN_URL"]).strip()
+        turn_username = str(st.secrets["TURN_USERNAME"]).strip()
+        turn_credential = str(st.secrets["TURN_CREDENTIAL"]).strip()
     except Exception:
-        return {
-            "iceServers": [
-                {
-                    "urls": ["turn:openrelay.metered.ca:443?transport=tcp"],
-                    "username": "openrelayproject",
-                    "credential": "openrelayproject",
-                }
-            ]
-        }
+        turn_url = ""
+        turn_username = ""
+        turn_credential = ""
+
+    sample_values = ("your-server", "ชื่อผู้ใช้", "รหัสผ่าน")
+    if not turn_url or any(value in turn_url + turn_username + turn_credential for value in sample_values):
+        st.warning("กรุณาใส่ค่า TURN Server จริงใน Manage app > Settings > Secrets ก่อนเปิดกล้อง")
+        return {"iceServers": []}
+
+    return {
+        "iceServers": [
+            {
+                "urls": [turn_url],
+                "username": turn_username,
+                "credential": turn_credential,
+            }
+        ]
+    }
 
 
 st.markdown("### 📹 กล้องตรวจสอบแบบเรียลไทม์")
