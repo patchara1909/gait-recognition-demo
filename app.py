@@ -68,7 +68,18 @@ st.markdown("### 📹 เปิดกล้องเพื่อเริ่ม�
 
 
 def get_rtc_configuration():
-    ice_servers = [{"urls": ["stun:stun.cloudflare.com:3478"]}]
+    ice_servers = [
+        {"urls": ["stun:stun.cloudflare.com:3478"]},
+        {
+            "urls": [
+                "turn:openrelay.metered.ca:80",
+                "turn:openrelay.metered.ca:443",
+                "turn:openrelay.metered.ca:443?transport=tcp",
+            ],
+            "username": "openrelayproject",
+            "credential": "openrelayproject",
+        },
+    ]
 
     try:
         turn_url = st.secrets["TURN_URL"]
