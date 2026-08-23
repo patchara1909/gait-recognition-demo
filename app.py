@@ -1,7 +1,8 @@
 import cv2
 import mediapipe as mp
-import numpy as np
 import streamlit as st
+from streamlit_webrtc import WebRtcMode, webrtc_streamer
+import av
 
 # ตั้งค่าหน้าเว็บ Streamlit
 st.set_page_config(
@@ -25,13 +26,35 @@ except AttributeError:
     mp_pose = legacy_pose
     mp_drawing = legacy_drawing
 
-st.markdown("### 📷 กล้องสำหรับสาธิต")
-st.caption("กด Take Photo เพื่อเปิดกล้องและถ่ายภาพ หรือกด Retake เพื่อถ่ายใหม่")
-captured_image = st.camera_input("เปิดกล้อง")
+class VideoProcessor:
+    def __init__(self):
+        self.pose_detector = mp_pose.Pose(
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
 
-if captured_image is not None:
-    image_bytes = np.frombuffer(captured_image.getvalue(), dtype=np.uint8)
-    image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
-    image = cv2.flip(image, 1)
-    st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), use_container_width=True)
-    st.success("กล้องทำงานแล้ว พร้อมใช้สาธิต")
+    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        image = cv2.flip(frame.to_ndarray(format="bgr24"), 1)
+        results = self.pose_detector.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+        if results.pose_landmarks:
+            mp_drawing.draw_landmarks(
+                image,
+                results.pose_landmarks,
+                mp_pose.POSE_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+                mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
+            )
+
+        return av.VideoFrame.from_ndarray(image, format="bgr24")
+
+
+st.markdown("### 📹 กล้องเรียลไทม์สำหรับสาธิต")
+st.caption("กด START เพื่อเปิดกล้อง และกด STOP เพื่อปิดกล้อง")
+webrtc_streamer(
+    key="gait-recognition-demo",
+    mode=WebRtcMode.SENDRECV,
+    video_processor_factory=VideoProcessor,
+    rtc_configuration={"iceServers": []},
+    media_stream_constraints={"video": True, "audio": False},
+)
