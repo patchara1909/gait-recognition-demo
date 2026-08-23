@@ -65,10 +65,32 @@ class VideoProcessor:
 
 # ส่วนแสดงผล WebRTC สำหรับเปิดกล้องสตรีมมิ่งเรียลไทม์
 st.markdown("### 📹 เปิดกล้องเพื่อเริ่มการตรวจสอบ")
+
+
+def get_rtc_configuration():
+    ice_servers = [{"urls": ["stun:stun.cloudflare.com:3478"]}]
+
+    try:
+        turn_url = st.secrets["TURN_URL"]
+        turn_username = st.secrets["TURN_USERNAME"]
+        turn_credential = st.secrets["TURN_CREDENTIAL"]
+    except Exception:
+        return {"iceServers": ice_servers}
+
+    ice_servers.append(
+        {
+            "urls": [turn_url],
+            "username": turn_username,
+            "credential": turn_credential,
+        }
+    )
+    return {"iceServers": ice_servers}
+
+
 webrtc_streamer(
     key="gait-recognition",
     mode=WebRtcMode.SENDRECV,
     video_processor_factory=VideoProcessor,
-    rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+    rtc_configuration=get_rtc_configuration(),
     media_stream_constraints={"video": True, "audio": False}
 )
