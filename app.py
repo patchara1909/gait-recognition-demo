@@ -2,8 +2,6 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import streamlit as st
-from streamlit_webrtc import WebRtcMode, webrtc_streamer
-import av
 
 # ตั้งค่าหน้าเว็บ Streamlit
 st.set_page_config(
@@ -27,81 +25,37 @@ except AttributeError:
     mp_pose = legacy_pose
     mp_drawing = legacy_drawing
 
-# ฟังก์ชันสำหรับประมวลผลภาพจากเว็บแคม
-class VideoProcessor:
-    def __init__(self):
-        # กำหนดค่าเริ่มต้นตัวตรวจจับท่าทาง
-        self.pose_detector = mp_pose.Pose(
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5
+def process_image(image):
+    image = cv2.flip(image, 1)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    with mp_pose.Pose(
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5,
+    ) as pose_detector:
+        results = pose_detector.process(image_rgb)
+
+    if results.pose_landmarks:
+        mp_drawing.draw_landmarks(
+            image,
+            results.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+            mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
         )
 
-    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
-        img = frame.to_ndarray(format="bgr24")
-        
-        # กลับด้านภาพเหมือนกระจก เพื่อความ 
-        img = cv2.flip(img, 1)
-        
-        # แปลงสีเป็น RGB สำหรับประมวลผลด้วย MediaPipe
-        image_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        image_rgb.flags.writeable = False
-        results = self.pose_detector.process(image_rgb)
-        
-        # แปลงกลับเป็น BGR สำหรับแสดงผลบน OpenCV
-        image_rgb.flags.writeable = True
-        img = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
-
-        # วาดโครงกระดูก (Pose Landmarks) ลงบนภาพ
-        if results.pose_landmarks:
-            mp_drawing.draw_landmarks(
-                img,
-                results.pose_landmarks,
-                mp_pose.POSE_CONNECTIONS,
-                mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
-                mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2)
-            )
-
-        return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-# ส่วนแสดงผล WebRTC สำหรับเปิดกล้องสตรีมมิ่งเรียลไทม์
-st.markdown("### 📹 เปิดกล้องเพื่อเริ่มการตรวจสอบ")
+    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB), bool(results.pose_landmarks)
 
 
-def get_rtc_configuration():
-    ice_servers = [
-        {"urls": ["stun:stun.cloudflare.com:3478"]},
-        {
-            "urls": [
-                "turn:openrelay.metered.ca:80",
-                "turn:openrelay.metered.ca:443",
-                "turn:openrelay.metered.ca:443?transport=tcp",
-            ],
-            "username": "openrelayproject",
-            "credential": "openrelayproject",
-        },
-    ]
+st.markdown("### 📷 ถ่ายภาพเพื่อเริ่มการตรวจสอบ")
+captured_image = st.camera_input("เปิดกล้อง")
 
-    try:
-        turn_url = st.secrets["TURN_URL"]
-        turn_username = st.secrets["TURN_USERNAME"]
-        turn_credential = st.secrets["TURN_CREDENTIAL"]
-    except Exception:
-        return {"iceServers": ice_servers}
-
-    ice_servers.append(
-        {
-            "urls": [turn_url],
-            "username": turn_username,
-            "credential": turn_credential,
-        }
-    )
-    return {"iceServers": ice_servers}
-
-
-webrtc_streamer(
-    key="gait-recognition",
-    mode=WebRtcMode.SENDRECV,
-    video_processor_factory=VideoProcessor,
-    rtc_configuration=get_rtc_configuration(),
-    media_stream_constraints={"video": True, "audio": False}
-)
+if captured_image is not None:
+    image_bytes = np.frombuffer(captured_image.getvalue(), dtype=np.uint8)
+    image = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+    processed_image, detected = process_image(image)
+    st.image(processed_image, use_container_width=True)
+    if detected:
+        st.success("ตรวจพบโครงกระดูกแล้ว")
+    else:
+        st.warning("ยังไม่พบโครงกระดูก กรุณาถ่ายภาพใหม่")
