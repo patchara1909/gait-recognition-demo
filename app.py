@@ -8,7 +8,7 @@ import av
 # ตั้งค่าหน้าเว็บ Streamlit
 st.set_page_config(
     page_title="AI ระบบตรวจสอบท่าทางการเดินและจดจำบุคคล",
-    page_layout="wide"
+    layout="wide"
 )
 
 st.title("🚶‍♂️ AI ระบบตรวจสอบท่าทางการเดินและจดจำบุคคล")
