@@ -52,18 +52,26 @@ class VideoProcessor:
 
 
 def get_rtc_configuration():
-    ice_servers = [{"urls": ["stun:stun.cloudflare.com:3478"]}]
     try:
-        ice_servers.append(
-            {
-                "urls": [st.secrets["TURN_URL"]],
-                "username": st.secrets["TURN_USERNAME"],
-                "credential": st.secrets["TURN_CREDENTIAL"],
-            }
-        )
+        return {
+            "iceServers": [
+                {
+                    "urls": [st.secrets["TURN_URL"]],
+                    "username": st.secrets["TURN_USERNAME"],
+                    "credential": st.secrets["TURN_CREDENTIAL"],
+                }
+            ]
+        }
     except Exception:
-        pass
-    return {"iceServers": ice_servers}
+        return {
+            "iceServers": [
+                {
+                    "urls": ["turn:openrelay.metered.ca:443?transport=tcp"],
+                    "username": "openrelayproject",
+                    "credential": "openrelayproject",
+                }
+            ]
+        }
 
 
 st.markdown("### 📹 กล้องตรวจสอบแบบเรียลไทม์")
